@@ -1,0 +1,57 @@
+{
+  "description": "MongoDB Image",
+  "variables": {
+    "version": "4.2.0",
+    "aws_region": "eu-west-1",
+    "build_name": "mongodb",
+    "build_id": "{{isotime \"20060102150405\"}}"
+  },
+  "builders": [
+    {
+      "ami_name": "{{ user `build_name` }}_{{ user `version` }}_{{ user `build_id` }}",
+      "ami_regions": "{{ user `aws_region` }}",
+      "associate_public_ip_address": true,
+      "instance_type": "c5.large",
+      "region": "{{ user `aws_region` }}",
+      "source_ami_filter": {
+        "filters": {
+          "virtualization-type": "hvm",
+          "architecture": "x86_64",
+          "name": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*",
+          "block-device-mapping.volume-type": "gp2",
+          "root-device-type": "ebs"
+        },
+        "owners": ["099720109477"],
+        "most_recent": true
+      },
+      "ssh_timeout": "10m",
+      "ssh_username": "ubuntu",
+      "type": "amazon-ebs",
+      "run_tags": {
+        "Name": "\"{{ user `build_name` }}_{{ user `version` }}_{{ user `build_id` }}",
+        "packer-building": "true"
+      },
+      "tags": {
+        "Name": "{{ user `build_name` }}",
+        "build_name": "{{ user `build_name` }}",
+        "build_id": "{{ user `build_id` }}",
+        "source_ami": "{{.SourceAMI}}"
+      },
+      "ssh_interface": "public_ip",
+      "spot_price_auto_product": "Linux/UNIX (Amazon VPC)",
+      "spot_price": "auto"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "script": "./scripts/install-packages.sh",
+      "execute_command": "echo '' | {{ .Vars }} sudo -E -S bash '{{ .Path }}'"
+    },
+    {
+      "type": "shell",
+      "script": "./scripts/cleanup.sh",
+      "execute_command": "echo '' | {{ .Vars }} sudo -E -S bash '{{ .Path }}'"
+    }
+  ]
+}
